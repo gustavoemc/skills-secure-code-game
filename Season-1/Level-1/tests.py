@@ -40,4 +40,4 @@ class TestOnlineStore(unittest.TestCase):
         self.assertEqual(c.validorder(order_1), 'Invalid item type: service')
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(False)
