@@ -34,4 +34,4 @@ class TestOnlineStore(unittest.TestCase):
         self.assertEqual(c.validorder(order_2), 'Total amount payable for an order exceeded')
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(False)
