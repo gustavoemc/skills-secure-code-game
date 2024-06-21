@@ -13,6 +13,13 @@ def source():
     TaxPayer('foo', 'bar').get_prof_picture(request.args["input"])
 ### Unrelated to the exercise -- Ends here -- Please ignore
 
+def safe_path(path):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    filepath = os.path.normpath(os.path.join(base_dir, path))
+    if base_dir != os.path.commonpath([base_dir, filepath]):
+        return None
+    return filepath
+
 class TaxPayer:
 
     def __init__(self, username, password):
@@ -25,31 +32,33 @@ class TaxPayer:
     def get_prof_picture(self, path=None):
         # setting a profile picture is optional
         if not path:
-            pass
-
-        # defends against path traversal attacks
-        if path.startswith('/') or path.startswith('..'):
             return None
 
-        # builds path
-        base_dir = os.path.dirname(os.path.abspath(__file__))
-        prof_picture_path = os.path.normpath(os.path.join(base_dir, path))
+        # Secure the path using safe_path
+        prof_picture_path = safe_path(path)
+        if not prof_picture_path:
+            return None
 
-        with open(prof_picture_path, 'rb') as pic:
-            picture = bytearray(pic.read())
-
-        # assume that image is returned on screen after this
-        return prof_picture_path
+        try:
+            with open(prof_picture_path, 'rb') as pic:
+                picture = bytearray(pic.read())
+            return prof_picture_path
+        except FileNotFoundError:
+            return None
 
     # returns the path of an attached tax form that every user should submit
     def get_tax_form_attachment(self, path=None):
-        tax_data = None
-
         if not path:
             raise Exception("Error: Tax form is required for all users")
 
-        with open(path, 'rb') as form:
-            tax_data = bytearray(form.read())
+        # Secure the path using safe_path
+        tax_form_path = safe_path(path)
+        if not tax_form_path:
+            raise Exception("Invalid path for tax form")
 
-        # assume that tax data is returned on screen after this
-        return path
+        try:
+            with open(tax_form_path, 'rb') as form:
+                tax_data = bytearray(form.read())
+            return tax_form_path
+        except FileNotFoundError:
+            raise Exception("Tax form not found")
