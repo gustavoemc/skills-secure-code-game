@@ -36,7 +36,7 @@ def validorder(order):
                 expenses += Decimal(str(item.amount)) * item.quantity
         else:
             return "Invalid item type: %s" % item.type
-    
+
     if abs(payments) > MAX_TOTAL or expenses > MAX_TOTAL:
         return "Total amount payable for an order exceeded"
 
