@@ -49,4 +49,4 @@ class TestTaxPayer(unittest.TestCase):
         self.assertEqual(original_base_dir, resulted_based_dir)
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(False)
