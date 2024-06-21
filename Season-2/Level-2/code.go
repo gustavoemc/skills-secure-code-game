@@ -1,14 +1,3 @@
-// Welcome to Secure Code Game Season-2/Level-2!
-
-// Follow the instructions below to get started:
-
-// 1. code_test.go is passing but the code is vulnerable
-// 2. Review the code. Can you spot the bugs(s)?
-// 3. Fix the code.go, but ensure that code_test.go passes
-// 4. Run hack_test.go and if passing then CONGRATS!
-// 5. If stuck then read the hint
-// 6. Compare your solution with solution/solution.go
-
 package main
 
 import (
@@ -16,12 +5,25 @@ import (
 	"log"
 	"net/http"
 	"regexp"
+
+	"golang.org/x/crypto/bcrypt"
+	"golang.org/x/time/rate"
 )
 
 var reqBody struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
+
+// Password hashes for test users (bcrypt hashed)
+var testFakeMockUsers = map[string]string{
+	"user1@example.com": "$2a$10$N9qo8uLOickgx2ZMRZo5i.U3t6eTWo2xZG.OsbcQbs0h80xjo4zqW", // password12345
+	"user2@example.com": "$2a$10$7bZhTG/jzg5.X5gzpVbEqOiOhT5f44PTslqFTV1ZbSl3Cx1LfbYx6", // B7rx9OkWVdx13$QF6Imq
+	"user3@example.com": "$2a$10$C9peHPcXPhEo5F32bcTyeuUtwqoz/5JhGmO0IUwUB3QF3jCTzGB2m", // hoxnNT4g&ER0&9Nz0pLO
+	"user4@example.com": "$2a$10$56OJJ2D8uOYaz1tM5D2PuOLR/1/kZK.O4zKgaLUp5nSCwRLVgfG36", // Log4Fun
+}
+
+var limiter = rate.NewLimiter(1, 3) // 1 request per second with a burst size of 3
 
 func isValidEmail(email string) bool {
 	// The provided regular expression pattern for email validation by OWASP
@@ -35,16 +37,11 @@ func isValidEmail(email string) bool {
 }
 
 func loginHandler(w http.ResponseWriter, r *http.Request) {
-
-	// Test users
-	var testFakeMockUsers = map[string]string{
-		"user1@example.com": "password12345",
-		"user2@example.com": "B7rx9OkWVdx13$QF6Imq",
-		"user3@example.com": "hoxnNT4g&ER0&9Nz0pLO",
-		"user4@example.com": "Log4Fun",
-	}
-
 	if r.Method == "POST" {
+		if !limiter.Allow() {
+			http.Error(w, "Too many requests", http.StatusTooManyRequests)
+			return
+		}
 
 		decode := json.NewDecoder(r.Body)
 		decode.DisallowUnknownFields()
@@ -59,23 +56,24 @@ func loginHandler(w http.ResponseWriter, r *http.Request) {
 
 		if !isValidEmail(email) {
 			log.Printf("Invalid email format: %q", email)
-			http.Error(w, "Invalid email format", http.StatusBadRequest)
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 			return
 		}
 
-		storedPassword, ok := testFakeMockUsers[email]
+		hashedPassword, ok := testFakeMockUsers[email]
 		if !ok {
-			http.Error(w, "invalid email or password", http.StatusUnauthorized)
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 			return
 		}
 
-		if password == storedPassword {
-			log.Printf("User %q logged in successfully with a valid password %q", email, password)
-			w.WriteHeader(http.StatusOK)
-		} else {
-			http.Error(w, "Invalid Email or Password", http.StatusUnauthorized)
+		err = bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+		if err != nil {
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+			return
 		}
 
+		log.Printf("User %q logged in successfully", email)
+		w.WriteHeader(http.StatusOK)
 	} else {
 		http.Error(w, "Invalid request method", http.StatusMethodNotAllowed)
 	}
