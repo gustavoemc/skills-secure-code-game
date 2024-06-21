@@ -1,7 +1,6 @@
 # Welcome to Secure Code Game Season-1/Level-3!
 
 # You know how to play by now, good luck!
-
 import os
 from flask import Flask, request, abort
 
@@ -27,7 +26,6 @@ class TaxPayer:
         if not path:
             return None
         
-        # Secure the base directory
         base_dir = os.path.dirname(os.path.abspath(__file__))
         safe_path = self.secure_path(base_dir, path)
 
@@ -45,7 +43,6 @@ class TaxPayer:
         if not path:
             raise Exception("Tax form is required for all users")
 
-        # Secure the base directory
         base_dir = os.path.dirname(os.path.abspath(__file__))
         safe_path = self.secure_path(base_dir, path)
 
@@ -61,10 +58,8 @@ class TaxPayer:
 
     @staticmethod
     def secure_path(base_dir, path):
-        # Normalize the path to prevent traversal
         normalized_path = os.path.normpath(os.path.join(base_dir, path))
 
-        # Ensure the path is within the base directory
         if os.path.commonpath([normalized_path, base_dir]) != base_dir:
             return None
         return normalized_path
