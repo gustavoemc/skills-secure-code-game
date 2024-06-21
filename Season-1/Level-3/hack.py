@@ -29,10 +29,11 @@ class TestTaxPayer(unittest.TestCase):
         file_path = './../../../../../etc/passwd'
         # complete path for input
         input_path = base_dir + file_path
-        # the output of the function upon processing user input
-        output = test_obj.get_tax_form_attachment(input_path)
 
-        self.assertIsNone(output)
+        with self.assertRaises(Exception) as context:
+            test_obj.get_tax_form_attachment(input_path)
+
+        self.assertTrue("Invalid path for tax form" in str(context.exception))
 
 if __name__ == '__main__':
     unittest.main()
