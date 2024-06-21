@@ -36,4 +36,4 @@ class TestTaxPayer(unittest.TestCase):
         self.assertTrue("Invalid path for tax form" in str(context.exception))
 
 if __name__ == '__main__':
-    unittest.main()
+    unittest.main(False)
